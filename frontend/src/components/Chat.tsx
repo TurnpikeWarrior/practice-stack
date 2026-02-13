@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Message = {
   role: 'human' | 'assistant';
@@ -79,11 +81,29 @@ export default function Chat() {
             <div
               className={`max-w-[80%] p-3 rounded-lg ${
                 m.role === 'human'
-                  ? 'bg-blue-500 text-white rounded-br-none'
-                  : 'bg-white border text-gray-800 rounded-bl-none shadow-sm'
+                  ? 'bg-blue-600 text-white rounded-br-none font-medium'
+                  : 'bg-white border text-black rounded-bl-none shadow-sm'
               }`}
             >
-              <p className="whitespace-pre-wrap text-sm">{m.content}</p>
+              <div className="text-sm prose prose-sm max-w-none break-words">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a 
+                        {...props} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className={m.role === 'human' ? 'text-blue-100 underline' : 'text-blue-600 underline font-medium hover:text-blue-800'}
+                      />
+                    ),
+                    p: ({ node, ...props }) => <p {...props} className="whitespace-pre-wrap" />,
+                    img: ({ node, ...props }) => <img {...props} className="max-w-full h-auto rounded-md my-2 shadow-sm" />,
+                  }}
+                >
+                  {m.content}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         ))}
@@ -107,7 +127,7 @@ export default function Chat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about a representative..."
-          className="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm text-black placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={isLoading}
         />
         <button
