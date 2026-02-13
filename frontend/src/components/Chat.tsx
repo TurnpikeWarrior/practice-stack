@@ -34,6 +34,7 @@ export default function Chat({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(mode === 'centered');
   const isStreamingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -96,6 +97,15 @@ export default function Chat({
     }
   };
 
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+      isStreamingRef.current = false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -105,6 +115,7 @@ export default function Chat({
     setInput('');
     setIsLoading(true);
     isStreamingRef.current = true;
+    abortControllerRef.current = new AbortController();
 
     try {
       const { data: { session } } = await createClient().auth.getSession();
@@ -113,6 +124,7 @@ export default function Chat({
 
       const response = await fetch('http://localhost:8000/chat/stream', {
         method: 'POST',
+        signal: abortControllerRef.current.signal,
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
@@ -236,7 +248,8 @@ export default function Chat({
             <p className="text-[10px] font-black text-black uppercase tracking-[0.3em]">Encrypted Terminal Ready</p>
           </div>
         )}
-        {messages.map((m, i) => (
+        {/* Only display the last 2 interactions (last 4 messages total) */}
+        {messages.slice(-4).map((m, i) => (
           <div key={i} className={`flex ${m.role === 'human' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
             <div className={`max-w-[90%] p-4 rounded-3xl ${
               m.role === 'human' 
@@ -291,19 +304,30 @@ export default function Chat({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Lookup representative..."
+          placeholder={isLoading ? "AI is processing..." : "Lookup representative..."}
           className="flex-1 border-2 border-gray-100 rounded-2xl px-5 py-3 text-sm text-black placeholder:text-gray-500 focus:outline-none focus:border-blue-600 focus:ring-0 transition-all font-medium"
           disabled={isLoading}
           aria-label="Intelligence query input"
         />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="bg-blue-700 text-white w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-blue-800 disabled:opacity-50 transition-all shadow-xl active:scale-90 outline-none focus:ring-2 focus:ring-blue-400"
-          aria-label="Submit query"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
-        </button>
+        {isLoading ? (
+          <button
+            type="button"
+            onClick={handleStop}
+            className="bg-red-50 text-red-600 border border-red-100 w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-red-100 transition-all shadow-sm active:scale-90 outline-none"
+            aria-label="Stop AI generation"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            className="bg-blue-700 text-white w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-blue-800 disabled:opacity-50 transition-all shadow-xl active:scale-90 outline-none focus:ring-2 focus:ring-blue-400"
+            aria-label="Submit query"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+          </button>
+        )}
       </form>
     </div>
   );
