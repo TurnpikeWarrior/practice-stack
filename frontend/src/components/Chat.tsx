@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import Link from 'next/link';
 
 type Message = {
   role: 'human' | 'assistant';
@@ -34,7 +35,7 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('http://localhost:8000/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -45,11 +46,39 @@ export default function Chat() {
 
       if (!response.ok) throw new Error('Failed to fetch response');
 
-      const data = await response.json();
-      const assistantMessage: Message = { role: 'assistant', content: data.response };
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      const decoder = new TextDecoder();
+      let assistantContent = '';
       
-      setMessages((prev) => [...prev, assistantMessage]);
-      setHistory(data.history);
+      // Add an initial empty message for the assistant
+      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        assistantContent += chunk;
+
+        // Update the last message (the assistant's) with the accumulated content
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = {
+            role: 'assistant',
+            content: assistantContent,
+          };
+          return newMessages;
+        });
+      }
+
+      // Update history after stream is complete
+      setHistory((prev) => [
+        ...prev,
+        ['human', input],
+        ['assistant', assistantContent],
+      ]);
     } catch (error) {
       console.error('Error:', error);
       setMessages((prev) => [
@@ -88,18 +117,34 @@ export default function Chat() {
               <div className="text-sm prose prose-sm max-w-none break-words">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ node, ...props }) => (
-                      <a 
-                        {...props} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className={m.role === 'human' ? 'text-blue-100 underline' : 'text-blue-600 underline font-medium hover:text-blue-800'}
-                      />
-                    ),
-                    p: ({ node, ...props }) => <p {...props} className="whitespace-pre-wrap" />,
-                    img: ({ node, ...props }) => <img {...props} className="max-w-full h-auto rounded-md my-2 shadow-sm" />,
-                  }}
+                                  components={{
+                                    a: ({ node, ...props }) => {
+                                      const isInternal = props.href?.startsWith('/');
+                                      const classes = m.role === 'human' 
+                                        ? 'text-blue-100 underline' 
+                                        : 'text-blue-600 underline font-medium hover:text-blue-800';
+                                      
+                                      if (isInternal) {
+                                        return (
+                                          <Link href={props.href || '#'} className={classes}>
+                                            {props.children}
+                                          </Link>
+                                        );
+                                      }
+                                      
+                                      return (
+                                        <a 
+                                          {...props} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className={classes}
+                                        />
+                                      );
+                                    },
+                                    p: ({ node, ...props }) => <p {...props} className="whitespace-pre-wrap" />,
+                                    img: ({ node, ...props }) => <img {...props} className="max-w-full h-auto rounded-md my-2 shadow-sm" />,
+                                  }}
+                  
                 >
                   {m.content}
                 </ReactMarkdown>
