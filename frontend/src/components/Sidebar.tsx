@@ -42,7 +42,7 @@ export default function Sidebar({ currentId, onSelect, onNewChat }: SidebarProps
     try {
       const { data: { session } } = await createClient().auth.getSession();
       const orderData = items.map((item, index) => ({
-        id: item.type === 'conversation' ? item.id : (item as TrackedBill).bill_id,
+        id: item.type === 'conversation' ? item.id : (item as RegistryTrackedBill).bill_id,
         type: item.type,
         position: index
       }));
@@ -157,7 +157,7 @@ export default function Sidebar({ currentId, onSelect, onNewChat }: SidebarProps
     }
   };
 
-  const startEditing = (e: React.MouseEvent, item: RegistryConversation) => {
+  const startEditing = (e: React.MouseEvent, item: RegistryItem) => {
     e.stopPropagation();
     setEditingId(item.id);
     setEditFormTitle(item.title);
