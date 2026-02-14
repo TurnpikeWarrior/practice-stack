@@ -294,9 +294,6 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
     <div className="h-screen bg-white flex flex-col font-sans selection:bg-blue-100 overflow-hidden text-black">
       <Header user={user} onSignOut={handleSignOut} />
       
-      {/* Spacer for fixed header */}
-      <div className="h-16 shrink-0" />
-
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar for Research Tabs */}
         <Sidebar 
@@ -305,7 +302,7 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
           onNewChat={handleNewChat}
         />
 
-        <main className="flex-1 overflow-y-auto bg-white">
+        <main className="flex-1 overflow-y-auto bg-white py-12">
           {/* Optimized Horizontal Hero Section - WCAG Compliant */}
           <div className="pt-8 pb-8 border-b border-gray-200 bg-white">
             <div className="container mx-auto px-6 max-w-7xl flex flex-col md:flex-row items-center gap-10">

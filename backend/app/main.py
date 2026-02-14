@@ -26,6 +26,9 @@ class NoteCreate(BaseModel):
     title: str
     content: str
 
+class ConversationUpdate(BaseModel):
+    title: str
+
 # JWT Verification Logic using JWKS (Supports ES256)
 # Cache for JWKS to avoid fetching on every request
 _jwks_cache = None
@@ -125,6 +128,10 @@ async def get_member_conversation(bioguide_id: str, name: Optional[str] = None, 
     ).first()
     
     if conv:
+        # If title is generic, update it with the name if provided
+        if name and (conv.title.startswith("Briefing:") or conv.title == "New Chat"):
+            conv.title = name
+            db.commit()
         return {"id": str(conv.id)}
     
     # Create new one if not exists
@@ -140,8 +147,32 @@ async def get_member_conversation(bioguide_id: str, name: Optional[str] = None, 
 
 @app.get("/conversations")
 async def list_conversations(user_id: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    conversations = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.created_at.desc()).all()
+    # Only return conversations linked to a specific representative (Notebook Sessions)
+    conversations = db.query(Conversation).filter(
+        Conversation.user_id == user_id,
+        Conversation.bioguide_id.isnot(None)
+    ).order_by(Conversation.created_at.desc()).all()
     return [{"id": str(c.id), "title": c.title, "created_at": c.created_at, "bioguide_id": c.bioguide_id} for c in conversations]
+
+@app.patch("/conversations/{conversation_id}")
+async def update_conversation(conversation_id: str, update: ConversationUpdate, user_id: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    conv = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    conv.title = update.title
+    db.commit()
+    db.refresh(conv)
+    return conv
+
+@app.delete("/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str, user_id: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    conv = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    db.delete(conv)
+    db.commit()
+    return {"status": "success"}
 
 @app.get("/conversations/{conversation_id}/messages")
 async def get_messages(conversation_id: str, user_id: str = Depends(get_current_user), db: Session = Depends(get_db)):

@@ -10,7 +10,7 @@ type HeaderProps = {
 
 export default function Header({ user, onSignOut }: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between z-50 shadow-sm">
+    <header className="relative z-50 h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between shadow-sm shrink-0">
       <div className="flex items-center gap-3">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white text-xl shadow-inner">
