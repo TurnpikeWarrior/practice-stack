@@ -2,13 +2,28 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  const isValidUrl = (url: string | undefined): url is string => {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  if (!isValidUrl(supabaseUrl) || !supabaseAnonKey) {
+    // Return early if env vars are missing during build/init
+    return response;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -16,11 +31,13 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           )
         },
       },
@@ -29,5 +46,5 @@ export async function updateSession(request: NextRequest) {
 
   await supabase.auth.getUser()
 
-  return supabaseResponse
+  return response
 }

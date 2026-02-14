@@ -1,15 +1,20 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    // Return a dummy client during build time if env vars are missing
-    // Vercel build will succeed, and the real client will be used at runtime
+  // Extremely strict check for valid URL to prevent Vercel build crashes
+  const isValidUrl = (url: string | undefined): url is string => {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  if (!isValidUrl(supabaseUrl) || !supabaseAnonKey) {
+    // Return a dummy client during build time if env vars are missing or invalid
     return createBrowserClient(
-      supabaseUrl || 'https://placeholder.supabase.co',
-      supabaseAnonKey || 'placeholder'
+      'https://placeholder.supabase.co',
+      'placeholder'
     )
   }
 

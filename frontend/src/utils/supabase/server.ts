@@ -6,9 +6,37 @@ export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  const isValidUrl = (url: string | undefined): url is string => {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  if (!isValidUrl(supabaseUrl) || !supabaseAnonKey) {
+    return createServerClient(
+      'https://placeholder.supabase.co',
+      'placeholder',
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // Ignore
+            }
+          },
+        },
+      }
+    )
+  }
+
   return createServerClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder',
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
