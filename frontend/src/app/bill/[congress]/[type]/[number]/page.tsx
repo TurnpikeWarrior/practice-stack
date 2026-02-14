@@ -69,6 +69,10 @@ export default function BillDashboard({ params }: { params: Promise<{ congress: 
       }
     }
     init();
+
+    // Re-check status when registry changes elsewhere
+    window.addEventListener('refresh-registry', fetchTrackingStatus);
+    return () => window.removeEventListener('refresh-registry', fetchTrackingStatus);
   }, [congress, type, number]);
 
   const handleTrackBill = async () => {

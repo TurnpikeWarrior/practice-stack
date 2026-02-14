@@ -130,6 +130,9 @@ export default function Sidebar({ currentId, onSelect, onNewChat }: SidebarProps
         setRegistryItems(newItems);
         saveCustomOrder(newItems);
         
+        // Notify other components (like BillDashboard) that the registry has changed
+        window.dispatchEvent(new Event('refresh-registry'));
+        
         if (item.type === 'conversation' && item.id === currentId) {
           onNewChat();
         }
