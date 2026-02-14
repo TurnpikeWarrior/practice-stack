@@ -385,7 +385,14 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex flex-col gap-1">
                             <span className="text-[10px] font-black text-blue-700 uppercase tracking-[0.2em]">Legislation Record</span>
-                            {v.legislationUrl ? (
+                            {v.type && v.number ? (
+                              <Link 
+                                href={`/bill/${v.congress}/${v.type?.toLowerCase()}/${v.number}`}
+                                className="text-xl font-black text-blue-700 hover:text-blue-900 underline underline-offset-4 decoration-2 focus:ring-2 focus:ring-blue-500 rounded px-1"
+                              >
+                                {v.legislation}
+                              </Link>
+                            ) : v.legislationUrl ? (
                               <a href={v.legislationUrl} target="_blank" rel="noreferrer" className="text-xl font-black text-blue-700 hover:text-blue-900 underline underline-offset-4 focus:ring-2 focus:ring-blue-500 rounded px-1">
                                 {v.legislation}
                               </a>
@@ -432,16 +439,24 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
                   <div className="divide-y divide-gray-100">
                     {bills.length > 0 ? bills.map((bill, i) => (
-                      <div key={i} className="p-6 hover:bg-gray-50/50 transition-all">
+                      <div key={i} className="p-6 hover:bg-gray-50/50 transition-all group">
                         <div className="flex justify-between items-center mb-3">
-                          <span className="text-xs font-black text-blue-700 uppercase tracking-widest">
-                            {bill.type}{bill.number}
-                          </span>
+                          <Link 
+                            href={bill.type && bill.number ? `/bill/${bill.congress || details.terms?.[details.terms.length - 1]?.congress}/${bill.type.toLowerCase()}/${bill.number}` : '#'}
+                            className="text-xs font-black text-blue-700 uppercase tracking-widest hover:underline decoration-2 underline-offset-4"
+                          >
+                            {bill.type || 'N/A'}{bill.number || ''}
+                          </Link>
                           <time className="text-xs font-bold text-gray-700 uppercase">
                             Introduced: {bill.introducedDate}
                           </time>
                         </div>
-                        <p className="text-base font-bold text-black leading-snug mb-4">{bill.title}</p>
+                        <Link 
+                          href={bill.type && bill.number ? `/bill/${bill.congress || details.terms?.[details.terms.length - 1]?.congress}/${bill.type.toLowerCase()}/${bill.number}` : '#'}
+                          className="text-base font-bold text-black leading-snug mb-4 block group-hover:text-blue-900 transition-colors"
+                        >
+                          {bill.title}
+                        </Link>
                         {bill.latestAction && (
                           <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-700"></div>

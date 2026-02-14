@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from .database import get_db, init_db, Conversation, Message, SessionLocal, TrackedBill, ResearchNote
 from .services.cosint.agent import get_cosint_agent
 from jose import jwt
-import os
 import re
 from dotenv import load_dotenv
 
@@ -343,6 +342,9 @@ async def get_member_dashboard(bioguide_id: str):
                 "legislation": v.get("legislationNumber", "N/A"),
                 "legislationUrl": v.get("legislationUrl"),
                 "legislationTitle": bill_details.get("title", "No title available"),
+                "congress": v.get("congress"),
+                "type": v.get("legislationType"),
+                "number": v.get("legislationNumber"),
                 "question": v.get("voteQuestion"),
                 "vote": vote_cast or "Not Voting",
                 "result": v.get("result"),
@@ -353,6 +355,28 @@ async def get_member_dashboard(bioguide_id: str):
             "details": details,
             "bills": bills,
             "votes": votes
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/bill/{congress}/{bill_type}/{bill_number}")
+async def get_bill_dashboard(congress: int, bill_type: str, bill_number: str):
+    from .services.cosint.api_client import CongressAPIClient
+    client = CongressAPIClient()
+    try:
+        # Sanitize bill_type (e.g., 'h.r.' -> 'hr')
+        sanitized_type = re.sub(r'[^a-zA-Z]', '', bill_type).lower()
+        
+        details = client.get_bill_details(congress, sanitized_type, bill_number)
+        actions = client.get_bill_actions(congress, sanitized_type, bill_number)
+        cosponsors = client.get_bill_cosponsors(congress, sanitized_type, bill_number)
+        text_versions = client.get_bill_text(congress, sanitized_type, bill_number)
+        
+        return {
+            "details": details,
+            "actions": actions,
+            "cosponsors": cosponsors,
+            "text": text_versions
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

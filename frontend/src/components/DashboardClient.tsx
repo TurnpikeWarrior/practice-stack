@@ -13,26 +13,24 @@ export default function DashboardClient({ user }: { user: User }) {
   const searchParams = useSearchParams();
   const sessionParam = searchParams.get('session');
   
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(sessionParam);
+  // Use state but sync it with sessionParam when it changes
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  
+  // Derived or combined ID
+  const currentConversationId = sessionParam || selectedId;
   const supabase = createClient();
-
-  useEffect(() => {
-    if (sessionParam) {
-      setCurrentConversationId(sessionParam);
-    }
-  }, [sessionParam]);
 
   const handleSelectConversation = (id: string, bioguideId?: string) => {
     if (bioguideId) {
       router.push(`/member/${bioguideId}`);
     } else {
-      setCurrentConversationId(id);
+      setSelectedId(id);
       router.push(`/?session=${id}`);
     }
   };
 
   const handleNewChat = () => {
-    setCurrentConversationId(null);
+    setSelectedId(null);
     router.push('/');
   };
 
@@ -73,7 +71,7 @@ export default function DashboardClient({ user }: { user: User }) {
               <Chat 
                 mode="centered"
                 conversationId={currentConversationId} 
-                onIdGenerated={setCurrentConversationId}
+                onIdGenerated={setSelectedId}
                 user={user}
               />
             </div>

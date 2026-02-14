@@ -76,6 +76,21 @@ class CongressAPIClient:
         data = self._get(f"bill/{congress}/{bill_type.lower()}/{bill_number}/text")
         return data.get("textVersions", [])
 
+    def get_bill_actions(self, congress: int, bill_type: str, bill_number: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Fetch actions taken on a specific bill.
+        """
+        params = {"limit": limit}
+        data = self._get(f"bill/{congress}/{bill_type.lower()}/{bill_number}/actions", params=params)
+        return data.get("actions", [])
+
+    def get_bill_cosponsors(self, congress: int, bill_type: str, bill_number: str) -> List[Dict[str, Any]]:
+        """
+        Fetch cosponsors for a specific bill.
+        """
+        data = self._get(f"bill/{congress}/{bill_type.lower()}/{bill_number}/cosponsors")
+        return data.get("cosponsors", [])
+
     def get_recent_house_votes(self, limit: int = 5) -> List[Dict[str, Any]]:
         """
         Fetch the most recent House roll call votes.

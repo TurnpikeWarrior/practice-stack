@@ -34,7 +34,7 @@ export default function Chat({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(mode === 'centered');
-  const [actionTrigger, setActionTrigger] = useState<{name: string, id: string} | null>(null);
+  const [actionTrigger, setActionTrigger] = useState<{type: 'member' | 'bill', name: string, id: string, congress?: string, billType?: string, billNumber?: string} | null>(null);
   const isStreamingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -87,17 +87,21 @@ export default function Chat({
     if (!actionTrigger) return;
     
     if (accept) {
-      // Create or get the member conversation
-      try {
-        const { data: { session } } = await createClient().auth.getSession();
-        const response = await fetch(`http://localhost:8000/conversations/member/${actionTrigger.id}?name=${encodeURIComponent(actionTrigger.name)}`, {
-          headers: { 'Authorization': `Bearer ${session?.access_token}` }
-        });
-        if (response.ok) {
-          router.push(`/member/${actionTrigger.id}`);
+      if (actionTrigger.type === 'member') {
+        // Create or get the member conversation
+        try {
+          const { data: { session } } = await createClient().auth.getSession();
+          const response = await fetch(`http://localhost:8000/conversations/member/${actionTrigger.id}?name=${encodeURIComponent(actionTrigger.name)}`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          });
+          if (response.ok) {
+            router.push(`/member/${actionTrigger.id}`);
+          }
+        } catch (err) {
+          console.error("Failed to navigate:", err);
         }
-      } catch (err) {
-        console.error("Failed to navigate:", err);
+      } else if (actionTrigger.type === 'bill') {
+        router.push(`/bill/${actionTrigger.congress}/${actionTrigger.billType}/${actionTrigger.billNumber}`);
       }
     }
     
@@ -203,11 +207,27 @@ export default function Chat({
         }
 
         // CHECK FOR ACTION TRIGGERS: Format: [CREATE_PAGE_ACTION: Name | ID]
-        const actionMatch = assistantContent.match(/\[CREATE_PAGE_ACTION:\s*([^|]+)\|\s*([^\]]+)\]/);
-        if (actionMatch) {
+        const memberMatch = assistantContent.match(/\[CREATE_PAGE_ACTION:\s*([^|]+)\|\s*([^\]]+)\]/);
+        if (memberMatch) {
           setActionTrigger({
-            name: actionMatch[1].trim(),
-            id: actionMatch[2].trim()
+            type: 'member',
+            name: memberMatch[1].trim(),
+            id: memberMatch[2].trim()
+          });
+        }
+
+        // CHECK FOR BILL ACTION TRIGGERS: Format: [RESEARCH_BILL: Congress | Type | Number]
+        const billMatch = assistantContent.match(/\[RESEARCH_BILL:\s*(\d+)\s*\|\s*([^|]+)\|\s*([^\]]+)\]/);
+        if (billMatch) {
+          const bType = billMatch[2].trim().toLowerCase();
+          const bNum = billMatch[3].trim();
+          setActionTrigger({
+            type: 'bill',
+            name: `${bType.toUpperCase()} ${bNum}`,
+            id: `${billMatch[1]}-${bType}-${bNum}`,
+            congress: billMatch[1].trim(),
+            billType: bType,
+            billNumber: bNum
           });
         }
 
@@ -215,6 +235,7 @@ export default function Chat({
         const cleanedContent = assistantContent
           .replace(/\[INTEL_PACKET:[\s\S]*?\|END_PACKET\]/g, '')
           .replace(/\[CREATE_PAGE_ACTION:[^\]]+\]/g, '')
+          .replace(/\[RESEARCH_BILL:[^\]]+\]/g, '')
           .trim();
         
         setMessages((prev) => {
@@ -337,10 +358,12 @@ export default function Chat({
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-[90%] bg-blue-50 border border-blue-100 rounded-3xl p-5 shadow-lg space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-              <p className="text-sm font-black text-black uppercase tracking-widest leading-none">Intelligence Protocol Required</p>
+              <p className="text-sm font-black text-black uppercase tracking-widest leading-none">
+                {actionTrigger.type === 'member' ? 'MEMBER' : 'BILL'} PROTOCOL REQUIRED
+              </p>
             </div>
             <p className="text-sm text-gray-700 font-medium leading-relaxed">
-              Would you like to initialize a new <span className="font-black text-blue-700 underline">COSINT Intelligence Page</span> for <span className="font-black text-black underline decoration-blue-600 underline-offset-4">{actionTrigger.name}</span>?
+              Would you like to {actionTrigger.type === 'member' ? 'initialize a new' : 'open the'} <span className="font-black text-blue-700 underline">COSINT Intelligence Page</span> for <span className="font-black text-black underline decoration-blue-600 underline-offset-4">{actionTrigger.name}</span>?
             </p>
             <div className="flex gap-2 justify-end">
               <button 
