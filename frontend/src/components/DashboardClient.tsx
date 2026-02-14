@@ -18,7 +18,6 @@ export default function DashboardClient({ user }: { user: User }) {
   
   // Derived or combined ID
   const currentConversationId = sessionParam || selectedId;
-  const supabase = createClient();
 
   const handleSelectConversation = (id: string, bioguideId?: string) => {
     if (bioguideId) {
@@ -35,7 +34,7 @@ export default function DashboardClient({ user }: { user: User }) {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await createClient().auth.signOut();
     router.push('/login');
   };
 

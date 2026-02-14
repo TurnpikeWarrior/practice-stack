@@ -113,7 +113,7 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
 
   const handleDeleteNote = async (noteId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await createClient().auth.getSession();
       const response = await fetch(getApiUrl(`/notes/${noteId}`), {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${session?.access_token}` }
@@ -128,7 +128,7 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
 
   const handleUpdateNote = async (noteId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await createClient().auth.getSession();
       const response = await fetch(getApiUrl(`/notes/${noteId}`), {
         method: 'PATCH',
         headers: { 
@@ -248,7 +248,7 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await createClient().auth.getUser();
       if (!user) return router.push('/login');
       setUser(user);
       
