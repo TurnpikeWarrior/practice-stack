@@ -30,7 +30,7 @@ export default function Header({ user, onSignOut }: HeaderProps) {
         <div className="h-8 w-[1px] bg-gray-200 mx-2 hidden md:block" aria-hidden="true"></div>
         <button
           onClick={onSignOut}
-          className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:text-red-700 transition-colors border border-gray-300 rounded-lg hover:border-red-200 hover:bg-red-50 focus:ring-2 focus:ring-blue-500 outline-none"
+          className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:text-red-700 transition-colors border border-gray-300 rounded-lg hover:border-red-200 hover:bg-red-50 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
         >
           Logout
         </button>

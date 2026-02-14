@@ -34,12 +34,50 @@ export default function Chat({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(mode === 'centered');
+  const [isDisconnected, setIsDisconnected] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const [actionTrigger, setActionTrigger] = useState<{type: 'member' | 'bill', name: string, id: string, congress?: string, billType?: string, billNumber?: string} | null>(null);
   const isStreamingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // Tooltip logic
+  useEffect(() => {
+    if (mode === 'floating' && !isOpen) {
+      const acknowledged = localStorage.getItem('chatbot_acknowledged');
+      if (!acknowledged) {
+        setShowTooltip(true);
+      }
+    }
+  }, [mode, isOpen]);
+
+  const dismissTooltip = () => {
+    setShowTooltip(false);
+    localStorage.setItem('chatbot_acknowledged', 'true');
+  };
+
+  const openChat = () => {
+    setIsOpen(true);
+    dismissTooltip();
+  };
+
+  // Periodic health check
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/health');
+        setIsDisconnected(!response.ok);
+      } catch (err) {
+        setIsDisconnected(true);
+      }
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -54,15 +92,21 @@ export default function Chat({
     if (mode === 'floating') {
       const handleKeyDown = (e: KeyboardEvent) => {
         // Toggle with /
-        if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          setIsOpen(prev => {
-            const newState = !prev;
-            if (newState) {
-              setTimeout(() => inputRef.current?.focus(), 100);
-            }
-            return newState;
-          });
+        // If input is focused, only toggle if it's empty (so user can still type / if they meant to)
+        const isInputFocused = document.activeElement === inputRef.current;
+        const isInputEmpty = inputRef.current?.value === '';
+
+        if (e.key === '/') {
+          if (!isInputFocused || (isInputFocused && isInputEmpty)) {
+            e.preventDefault();
+            setIsOpen(prev => {
+              const newState = !prev;
+              if (newState) {
+                setTimeout(() => inputRef.current?.focus(), 100);
+              }
+              return newState;
+            });
+          }
         }
         // Close with Escape
         if (e.key === 'Escape' && isOpen) {
@@ -263,15 +307,35 @@ export default function Chat({
 
   if (mode === 'floating' && !isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-800 transition-all hover:scale-110 group z-[60] focus:ring-4 focus:ring-blue-300 outline-none"
-        title="Activate AI Terminal (Press /)"
-        aria-label="Open AI Intelligence Terminal"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m3 21 1.9-1.9a10.5 10.5 0 1 1 3.8 3.8Z"/></svg>
-        <span className="absolute -top-2 -right-2 bg-black text-[10px] font-black px-2 py-1 rounded border-2 border-white shadow-md" aria-hidden="true">/</span>
-      </button>
+      <div className="fixed bottom-8 right-8 z-[60] flex flex-col items-end gap-4">
+        {showTooltip && (
+          <div className="bg-white border-2 border-blue-600 p-5 rounded-2xl shadow-2xl max-w-[240px] animate-in fade-in slide-in-from-bottom-2 duration-500 relative">
+            <button 
+              onClick={dismissTooltip}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-[10px] font-black hover:bg-gray-800 cursor-pointer shadow-md"
+              aria-label="Dismiss tip"
+            >
+              ✕
+            </button>
+            <p className="text-sm font-bold text-black leading-relaxed">
+              Hello! Need help researching? I'm here to help you stay informed!
+            </p>
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r-2 border-b-2 border-blue-600 rotate-45"></div>
+          </div>
+        )}
+        <button
+          onClick={openChat}
+          className="w-16 h-16 bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-800 transition-all hover:scale-110 group focus:ring-4 focus:ring-blue-300 outline-none cursor-pointer overflow-hidden animate-gentle-float"
+          title="Activate AI Terminal (Press /)"
+          aria-label="Open AI Intelligence Terminal"
+        >
+          <img 
+            src="/assets/chatbot-icon.png" 
+            alt="COSINT Chatbot" 
+            className="w-full h-full object-cover"
+          />
+        </button>
+      </div>
     );
   }
 
@@ -281,15 +345,19 @@ export default function Chat({
 
   return (
     <div className={containerClasses} role="region" aria-label="AI Intelligence Terminal">
-      <div className="bg-blue-700 p-5 text-white flex justify-between items-center shadow-lg relative z-10">
+      <div className="bg-blue-700 py-3.5 px-5 text-white flex justify-between items-center shadow-lg relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></div>
-          <span className="font-black uppercase tracking-[0.2em] text-[10px]">Neural Intel Link</span>
+          <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-md ${
+            isDisconnected 
+              ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' 
+              : 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]'
+          }`}></div>
+          <span className="font-black uppercase tracking-[0.2em] text-[12px]">COSINT Query Link</span>
         </div>
         {mode === 'floating' && (
           <button 
             onClick={() => setIsOpen(false)} 
-            className="text-white/80 hover:text-white hover:rotate-90 transition-all duration-300 outline-none p-1"
+            className="text-white/80 hover:text-white hover:rotate-90 transition-all duration-300 outline-none p-1 cursor-pointer"
             aria-label="Minimize terminal"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -324,7 +392,7 @@ export default function Chat({
                       const isInternal = props.href?.startsWith('/');
                       const classes = m.role === 'human' 
                         ? 'text-blue-100 underline decoration-2 underline-offset-4 font-bold' 
-                        : 'text-blue-700 underline decoration-2 underline-offset-4 font-black hover:text-blue-900';
+                        : 'text-blue-700 underline decoration-2 underline-offset-4 font-black hover:text-blue-900 cursor-pointer';
                       
                       if (isInternal) return <Link href={props.href || '#'} className={classes} onClick={() => mode === 'floating' && setIsOpen(false)}>{props.children}</Link>;
                       return <a {...props} target="_blank" rel="noopener noreferrer" className={classes}/>;
@@ -368,13 +436,13 @@ export default function Chat({
             <div className="flex gap-2 justify-end">
               <button 
                 onClick={() => handleActionResponse(false)}
-                className="px-4 py-2 text-[10px] font-black uppercase text-gray-500 hover:text-black transition-colors outline-none"
+                className="px-4 py-2 text-[10px] font-black uppercase text-gray-500 hover:text-black transition-colors outline-none cursor-pointer"
               >
                 Negative
               </button>
               <button 
                 onClick={() => handleActionResponse(true)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-700 active:scale-95 transition-all outline-none"
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-700 active:scale-95 transition-all outline-none cursor-pointer"
               >
                 Execute Analysis
               </button>
@@ -389,7 +457,7 @@ export default function Chat({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={isLoading ? "AI is processing..." : "Lookup representative..."}
+          placeholder={isLoading ? "AI is processing..." : "How can I help you research today?"}
           className="flex-1 border-2 border-gray-100 rounded-2xl px-5 py-3 text-sm text-black placeholder:text-gray-500 focus:outline-none focus:border-blue-600 focus:ring-0 transition-all font-medium"
           disabled={isLoading}
           aria-label="Intelligence query input"

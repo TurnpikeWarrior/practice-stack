@@ -49,9 +49,12 @@ export default function LoginPage() {
         <div className="z-10 w-full max-w-4xl flex flex-col items-center gap-12">
           {/* Headline from User Image */}
           <div className="text-center space-y-6">
-            <h2 className="text-6xl md:text-8xl font-black text-black tracking-tighter leading-none">
-              Strategic <span className="text-blue-700">Intel.</span>
-            </h2>
+            <div className="space-y-2">
+              <span className="text-xl font-black text-black uppercase tracking-[0.2em]">Civic Open Source Intelligence</span>
+              <h2 className="text-6xl md:text-8xl font-black text-black tracking-tighter leading-none">
+                Stay <span className="text-blue-700">Informed.</span>
+              </h2>
+            </div>
             <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto font-bold leading-relaxed tracking-tight">
               A high-precision terminal for real-time Congressional oversight, voting records, and localized intelligence.
             </p>
@@ -89,12 +92,6 @@ export default function LoginPage() {
                   <img src="https://github.com/favicon.ico" alt="" className="w-5 h-5 invert" aria-hidden="true" />
                   Continue with GitHub
                 </button>
-              </div>
-
-              <div className="pt-4 border-t border-gray-100 text-center">
-                <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
-                  Federal Intelligence Access Protocol Active
-                </p>
               </div>
             </div>
           </div>

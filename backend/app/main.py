@@ -336,10 +336,15 @@ async def get_member_dashboard(bioguide_id: str):
         details = client.get_member_details(bioguide_id)
         bills = client.get_sponsored_legislation(bioguide_id, limit=10)
         
-        # Get recent votes
-        recent_votes_raw = client.get_recent_house_votes(limit=5)
+        # Get recent votes - fetch more to allow for filtering
+        recent_votes_raw = client.get_recent_house_votes(limit=15)
         votes = []
         for v in recent_votes_raw:
+            # Skip amendments (H.Amdt / S.Amdt)
+            leg_type = v.get("legislationType", "").upper()
+            if "AMDT" in leg_type:
+                continue
+                
             # Fetch bill title for more context
             bill_details = {}
             if v.get("legislationNumber") and v.get("legislationType"):

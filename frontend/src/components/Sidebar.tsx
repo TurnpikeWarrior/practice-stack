@@ -209,7 +209,7 @@ export default function Sidebar({ currentId, onSelect, onNewChat }: SidebarProps
       <div className="p-4">
         <button
           onClick={onNewChat}
-          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 outline-none"
+          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 outline-none cursor-pointer"
         >
           <span className="text-lg" aria-hidden="true">+</span> New Inquiry
         </button>
@@ -261,7 +261,7 @@ export default function Sidebar({ currentId, onSelect, onNewChat }: SidebarProps
                           router.push(`/bill/${item.congress}/${item.bill_type.toLowerCase()}/${item.bill_number}`);
                         }
                       }}
-                      className={`w-full text-left px-4 py-3 text-xs rounded-xl truncate transition-all outline-none pr-16 ${
+                      className={`w-full text-left px-4 py-3 text-xs rounded-xl truncate transition-all outline-none pr-16 cursor-pointer ${
                         currentId === item.id
                           ? 'bg-blue-600 text-white font-black shadow-md border-l-4 border-blue-400'
                           : 'text-gray-400 hover:bg-gray-800 hover:text-white font-bold'

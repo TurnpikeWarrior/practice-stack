@@ -213,10 +213,14 @@ export default function BillDashboard({ params }: { params: Promise<{ congress: 
             {/* Left Column: AI Digest & Action Timeline */}
             <div className="lg:col-span-8 space-y-12">
               <section>
-                <h2 className="text-xs font-black text-blue-700 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-700 rounded-full"></span>
-                  AI Legislative Digest
-                </h2>
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-2 w-full">
+                    <span className="w-2 h-2 bg-blue-700 rounded-full"></span>
+                    <h2 className="text-xs font-black text-blue-700 uppercase tracking-[0.3em]">
+                      AI Legislative Digest
+                    </h2>
+                  </div>
+                </div>
                 <div className="bg-blue-50/50 rounded-3xl p-8 border border-blue-100 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-2 h-full bg-blue-700"></div>
                   <div className="prose prose-sm max-w-none text-gray-800 font-medium leading-relaxed">
@@ -235,14 +239,25 @@ export default function BillDashboard({ params }: { params: Promise<{ congress: 
               </section>
 
               <section>
-                <h2 className="text-xs font-black text-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-black rounded-full"></span>
-                  Action Timeline
-                </h2>
-                <div className="relative pl-8 space-y-8 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
-                  {actions.slice(0, 15).map((action, i) => (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 bg-gray-100 border border-gray-200 px-4 py-2 w-full">
+                    <span className="w-2 h-2 bg-black rounded-full"></span>
+                    <h2 className="text-xs font-black text-black uppercase tracking-[0.3em]">
+                      Action Timeline
+                    </h2>
+                  </div>
+                </div>
+                <div className="relative pl-8 space-y-8">
+                  {actions.slice(0, 15).map((action, i, arr) => (
                     <div key={i} className="relative group">
-                      <div className="absolute -left-[27px] top-1.5 w-4 h-4 rounded-full border-4 border-white bg-blue-600 shadow-sm z-10"></div>
+                      {/* Vertical Line Segment - connects current dot to next dot */}
+                      {i < arr.length - 1 && (
+                        <div className="absolute -left-[19px] top-1/2 w-0.5 h-[calc(100%+32px)] bg-gray-200 z-0"></div>
+                      )}
+                      
+                      {/* Timeline Dot */}
+                      <div className="absolute -left-[27px] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-4 border-white bg-blue-600 shadow-sm z-10"></div>
+                      
                       <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group-hover:border-blue-200">
                         <time className="text-[10px] font-black text-blue-700 uppercase tracking-widest block mb-1">
                           {action.actionDate}
@@ -259,31 +274,30 @@ export default function BillDashboard({ params }: { params: Promise<{ congress: 
 
             {/* Right Column: Sponsorship & Committees */}
             <div className="lg:col-span-4 space-y-12">
-              <section className="sticky top-24">
-                <h2 className="text-xs font-black text-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-black rounded-full"></span>
-                  Sponsorship Ledger
-                </h2>
+              <section>
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 bg-gray-100 border border-gray-200 px-4 py-2 w-full">
+                    <span className="w-2 h-2 bg-black rounded-full"></span>
+                    <h2 className="text-xs font-black text-black uppercase tracking-[0.3em]">
+                      Sponsor Record
+                    </h2>
+                  </div>
+                </div>
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
                   <div className="p-6 bg-gray-50 border-b border-gray-200">
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-4">Primary Sponsor</span>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-700 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg">
-                        {details.sponsors?.[0]?.lastName?.[0]}
-                      </div>
-                      <div>
-                        <Link href={`/member/${details.sponsors?.[0]?.bioguideId}`} className="text-base font-black text-black hover:text-blue-700 block transition-colors">
-                          {details.sponsors?.[0]?.fullName}
-                        </Link>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                          {details.sponsors?.[0]?.party} &bull; {details.sponsors?.[0]?.state}
-                        </span>
-                      </div>
+                    <div>
+                      <Link href={`/member/${details.sponsors?.[0]?.bioguideId}`} className="text-base font-black text-black hover:text-blue-700 block transition-colors">
+                        {details.sponsors?.[0]?.fullName}
+                      </Link>
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                        {details.sponsors?.[0]?.party} &bull; {details.sponsors?.[0]?.state}
+                      </span>
                     </div>
                   </div>
                   <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Cosponsors</span>
+                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Co-Sponsors</span>
                       <span className="bg-black text-white px-2 py-0.5 rounded text-[10px] font-black">{cosponsors.length}</span>
                     </div>
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">

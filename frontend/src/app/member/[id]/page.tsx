@@ -352,10 +352,14 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
             {/* Left Column: Research Notebook & Voting Ledger */}
             <div className="lg:col-span-8 space-y-12">
               <section aria-labelledby="notebook-title">
-                <h2 id="notebook-title" className="text-xs font-black text-blue-700 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-700 rounded-full"></span>
-                  Research Notebook
-                </h2>
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-2 w-full">
+                    <span className="w-2 h-2 bg-blue-700 rounded-full"></span>
+                    <h2 id="notebook-title" className="text-xs font-black text-blue-700 uppercase tracking-[0.3em]">
+                      Research Notebook
+                    </h2>
+                  </div>
+                </div>
                 {researchNotes.length > 0 ? (
                   <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-left-4 duration-500">
                     {researchNotes.map((note) => (
@@ -371,11 +375,13 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
               </section>
 
               <section aria-labelledby="voting-title">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 id="voting-title" className="text-xs font-black text-black uppercase tracking-[0.3em] flex items-center gap-2">
+                <div className="flex justify-between items-center mb-6 bg-gray-100 border border-gray-200 px-4 py-2 w-full">
+                  <div className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-black rounded-full"></span>
-                    Voting Ledger
-                  </h2>
+                    <h2 id="voting-title" className="text-xs font-black text-black uppercase tracking-[0.3em]">
+                      Voting Record
+                    </h2>
+                  </div>
                   <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">Official Roll Call</span>
                 </div>
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
@@ -431,42 +437,68 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="lg:col-span-4">
-              <section aria-labelledby="registry-title" className="sticky top-24">
-                <h2 id="registry-title" className="text-xs font-black text-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-black rounded-full"></span>
-                  Sponsorship Registry
-                </h2>
+              <section aria-labelledby="registry-title">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 bg-gray-100 border border-gray-200 px-4 py-2 w-full">
+                    <span className="w-2 h-2 bg-black rounded-full"></span>
+                    <h2 id="registry-title" className="text-xs font-black text-black uppercase tracking-[0.3em]">
+                      Sponsor Record
+                    </h2>
+                  </div>
+                </div>
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
                   <div className="divide-y divide-gray-100">
-                    {bills.length > 0 ? bills.map((bill, i) => (
-                      <div key={i} className="p-6 hover:bg-gray-50/50 transition-all group">
-                        <div className="flex justify-between items-center mb-3">
+                    {bills.length > 0 ? bills.map((bill, i) => {
+                      const statusText = bill.latestAction?.text || '';
+                      const isPassed = /passed|became law|presented to president|signed|agreed to/i.test(statusText);
+                      const isFailed = /failed|rejected|vetoed|withdrawn/i.test(statusText);
+                      
+                      return (
+                        <div key={i} className="p-6 hover:bg-gray-50/50 transition-all group">
+                          <div className="flex justify-between items-center mb-3">
+                            <Link 
+                              href={bill.type && bill.number ? `/bill/${bill.congress || details.terms?.[details.terms.length - 1]?.congress}/${bill.type.toLowerCase()}/${bill.number}` : '#'}
+                              className="text-xs font-black text-blue-700 uppercase tracking-widest hover:underline decoration-2 underline-offset-4"
+                            >
+                              {bill.type || 'N/A'}{bill.number || ''}
+                            </Link>
+                            <time className="text-xs font-bold text-gray-700 uppercase">
+                              Introduced: {bill.introducedDate}
+                            </time>
+                          </div>
                           <Link 
                             href={bill.type && bill.number ? `/bill/${bill.congress || details.terms?.[details.terms.length - 1]?.congress}/${bill.type.toLowerCase()}/${bill.number}` : '#'}
-                            className="text-xs font-black text-blue-700 uppercase tracking-widest hover:underline decoration-2 underline-offset-4"
+                            className="text-base font-bold text-black leading-snug mb-4 block group-hover:text-blue-900 transition-colors"
                           >
-                            {bill.type || 'N/A'}{bill.number || ''}
+                            {bill.title}
                           </Link>
-                          <time className="text-xs font-bold text-gray-700 uppercase">
-                            Introduced: {bill.introducedDate}
-                          </time>
+                          {bill.latestAction && (
+                            <div className={`p-4 rounded-xl border relative overflow-hidden ${
+                              isPassed ? 'bg-green-50 border-green-100' : 
+                              isFailed ? 'bg-red-50 border-red-100' : 
+                              'bg-blue-50 border-blue-100'
+                            }`}>
+                              <div className={`absolute top-0 left-0 w-1.5 h-full ${
+                                isPassed ? 'bg-green-600' : 
+                                isFailed ? 'bg-red-600' : 
+                                'bg-blue-700'
+                              }`}></div>
+                              <span className={`text-[10px] font-black block mb-1 tracking-widest uppercase ${
+                                isPassed ? 'text-green-800' : 
+                                isFailed ? 'text-red-800' : 
+                                'text-blue-800'
+                              }`}>Status Update</span>
+                              <p className={`text-sm font-bold leading-relaxed ${
+                                isPassed ? 'text-green-900' : 
+                                isFailed ? 'text-red-900' : 
+                                'text-gray-900'
+                              }`}>{bill.latestAction.text}</p>
+                            </div>
+                          )}
                         </div>
-                        <Link 
-                          href={bill.type && bill.number ? `/bill/${bill.congress || details.terms?.[details.terms.length - 1]?.congress}/${bill.type.toLowerCase()}/${bill.number}` : '#'}
-                          className="text-base font-bold text-black leading-snug mb-4 block group-hover:text-blue-900 transition-colors"
-                        >
-                          {bill.title}
-                        </Link>
-                        {bill.latestAction && (
-                          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-700"></div>
-                            <span className="text-[10px] font-black text-blue-800 block mb-1 tracking-widest uppercase">Status Update</span>
-                            <p className="text-sm text-gray-900 font-bold leading-relaxed">{bill.latestAction.text}</p>
-                          </div>
-                        )}
-                      </div>
-                    )) : (
-                      <p className="p-12 text-gray-500 text-sm font-bold uppercase tracking-widest text-center italic">No active registries found.</p>
+                      );
+                    }) : (
+                      <p className="p-12 text-gray-500 text-sm font-bold uppercase tracking-widest text-center italic">No active records found.</p>
                     )}
                   </div>
                 </div>
