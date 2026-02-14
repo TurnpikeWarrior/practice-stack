@@ -269,43 +269,33 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
     router.push('/login');
   };
 
-  if (isLoading || !user) return (
-    <div className="flex min-h-screen items-center justify-center bg-white" aria-busy="true" aria-label="Loading intelligence data">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-    </div>
-  );
-
-  if (error || !data) return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      <Header user={user} onSignOut={handleSignOut} />
-      <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md border border-gray-200">
-        <h2 className="text-2xl font-black text-red-700 mb-4 uppercase tracking-tighter">System Error</h2>
-        <p className="text-gray-800 mb-6 font-medium">{error || "Could not retrieve representative intelligence."}</p>
-        <Link href="/" className="bg-blue-700 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 transition-all shadow-md active:scale-95 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-          Return to Terminal
-        </Link>
+  const mainContent = () => {
+    if (isLoading || !user) return (
+      <div className="flex flex-1 items-center justify-center bg-white" aria-busy="true" aria-label="Loading intelligence data">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
-    </div>
-  );
+    );
 
-  const { details, bills, votes } = data;
+    if (error || !data) return (
+      <div className="flex flex-1 flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md border border-gray-200">
+          <h2 className="text-2xl font-black text-red-700 mb-4 uppercase tracking-tighter">System Error</h2>
+          <p className="text-gray-800 mb-6 font-medium">{error || "Could not retrieve representative intelligence."}</p>
+          <Link href="/" className="bg-blue-700 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 transition-all shadow-md active:scale-95 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Return to Terminal
+          </Link>
+        </div>
+      </div>
+    );
 
-  return (
-    <div className="h-screen bg-white flex flex-col font-sans selection:bg-blue-100 overflow-hidden text-black">
-      <Header user={user} onSignOut={handleSignOut} />
-      
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar for Research Tabs */}
-        <Sidebar 
-          currentId={convId} 
-          onSelect={handleSelectConversation}
-          onNewChat={handleNewChat}
-        />
+    const { details, bills, votes } = data;
 
-        <main className="flex-1 overflow-y-auto bg-white py-12">
+    return (
+      <main className="flex-1 overflow-y-auto bg-white py-12">
+        <div className="container mx-auto px-6 max-w-7xl">
           {/* Optimized Horizontal Hero Section - WCAG Compliant */}
-          <div className="pt-8 pb-8 border-b border-gray-200 bg-white">
-            <div className="container mx-auto px-6 max-w-7xl flex flex-col md:flex-row items-center gap-10">
+          <div className="pb-8 border-b border-gray-200 bg-white">
+            <div className="flex flex-col md:flex-row items-center gap-10">
               {/* Profile Image */}
               <div className="relative shrink-0">
                 {details.depiction?.imageUrl ? (
@@ -358,11 +348,9 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          <div className="container mx-auto px-6 max-w-7xl mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10 pb-24">
-            
+          <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10 pb-24">
             {/* Left Column: Research Notebook & Voting Ledger */}
             <div className="lg:col-span-8 space-y-12">
-              {/* Research Notebook */}
               <section aria-labelledby="notebook-title">
                 <h2 id="notebook-title" className="text-xs font-black text-blue-700 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
                   <span className="w-2 h-2 bg-blue-700 rounded-full"></span>
@@ -382,7 +370,6 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
                 )}
               </section>
 
-              {/* Voting Ledger */}
               <section aria-labelledby="voting-title">
                 <div className="flex justify-between items-center mb-6">
                   <h2 id="voting-title" className="text-xs font-black text-black uppercase tracking-[0.3em] flex items-center gap-2">
@@ -436,7 +423,6 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
               </section>
             </div>
 
-            {/* Right Column: Sponsorship Registry - Optimized Contrast & Size */}
             <div className="lg:col-span-4">
               <section aria-labelledby="registry-title" className="sticky top-24">
                 <h2 id="registry-title" className="text-xs font-black text-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
@@ -472,18 +458,37 @@ export default function MemberDashboard({ params }: { params: Promise<{ id: stri
               </section>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
+    );
+  };
+
+  return (
+    <div className="h-screen bg-white flex flex-col font-sans selection:bg-blue-100 overflow-hidden text-black">
+      <Header user={user || { email: '' } as any} onSignOut={handleSignOut} />
+      
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar for Research Tabs */}
+        <Sidebar 
+          currentId={convId} 
+          onSelect={handleSelectConversation}
+          onNewChat={handleNewChat}
+        />
+
+        {mainContent()}
       </div>
 
       {/* Floating AI Terminal */}
-      <Chat 
-        mode="floating"
-        conversationId={convId}
-        onIdGenerated={setConvId}
-        user={user}
-        initialContext={`The user is currently viewing the profile of ${details.directOrderName} (Bioguide ID: ${bioguideId}). Use this Bioguide ID directly for tools if needed.`}
-        onIntelligenceCaptured={captureIntel}
-      />
+      {data && user && (
+        <Chat 
+          mode="floating"
+          conversationId={convId}
+          onIdGenerated={setConvId}
+          user={user}
+          initialContext={`The user is currently viewing the profile of ${data.details.directOrderName} (Bioguide ID: ${bioguideId}). Use this Bioguide ID directly for tools if needed.`}
+          onIntelligenceCaptured={captureIntel}
+        />
+      )}
     </div>
   );
 }

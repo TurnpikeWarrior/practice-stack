@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 type Message = {
   role: 'human' | 'assistant';
@@ -33,10 +34,12 @@ export default function Chat({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(mode === 'centered');
+  const [actionTrigger, setActionTrigger] = useState<{name: string, id: string} | null>(null);
   const isStreamingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,6 +82,27 @@ export default function Chat({
       setMessages([]);
     }
   }, [conversationId]);
+
+  const handleActionResponse = async (accept: boolean) => {
+    if (!actionTrigger) return;
+    
+    if (accept) {
+      // Create or get the member conversation
+      try {
+        const { data: { session } } = await createClient().auth.getSession();
+        const response = await fetch(`http://localhost:8000/conversations/member/${actionTrigger.id}?name=${encodeURIComponent(actionTrigger.name)}`, {
+          headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        });
+        if (response.ok) {
+          router.push(`/member/${actionTrigger.id}`);
+        }
+      } catch (err) {
+        console.error("Failed to navigate:", err);
+      }
+    }
+    
+    setActionTrigger(null);
+  };
 
   const loadMessages = async (id: string) => {
     try {
@@ -178,8 +202,20 @@ export default function Chat({
           }
         }
 
-        // Hide any intel tags from the UI chat bubble
-        const cleanedContent = assistantContent.replace(/\[INTEL_PACKET:[\s\S]*?\|END_PACKET\]/g, '').trim();
+        // CHECK FOR ACTION TRIGGERS: Format: [CREATE_PAGE_ACTION: Name | ID]
+        const actionMatch = assistantContent.match(/\[CREATE_PAGE_ACTION:\s*([^|]+)\|\s*([^\]]+)\]/);
+        if (actionMatch) {
+          setActionTrigger({
+            name: actionMatch[1].trim(),
+            id: actionMatch[2].trim()
+          });
+        }
+
+        // Hide any intel tags and action tags from the UI chat bubble
+        const cleanedContent = assistantContent
+          .replace(/\[INTEL_PACKET:[\s\S]*?\|END_PACKET\]/g, '')
+          .replace(/\[CREATE_PAGE_ACTION:[^\]]+\]/g, '')
+          .trim();
         
         setMessages((prev) => {
           const newMessages = [...prev];
@@ -295,6 +331,33 @@ export default function Chat({
           </div>
         )}
         <div ref={messagesEndRef} />
+        
+        {/* Action Trigger UI */}
+        {actionTrigger && !isLoading && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-[90%] bg-blue-50 border border-blue-100 rounded-3xl p-5 shadow-lg space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+              <p className="text-sm font-black text-black uppercase tracking-widest leading-none">Intelligence Protocol Required</p>
+            </div>
+            <p className="text-sm text-gray-700 font-medium leading-relaxed">
+              Would you like to initialize a new <span className="font-black text-blue-700 underline">COSINT Intelligence Page</span> for <span className="font-black text-black underline decoration-blue-600 underline-offset-4">{actionTrigger.name}</span>?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button 
+                onClick={() => handleActionResponse(false)}
+                className="px-4 py-2 text-[10px] font-black uppercase text-gray-500 hover:text-black transition-colors outline-none"
+              >
+                Negative
+              </button>
+              <button 
+                onClick={() => handleActionResponse(true)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-700 active:scale-95 transition-all outline-none"
+              >
+                Execute Analysis
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="p-5 border-t border-gray-100 bg-white flex gap-3 relative z-10 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">

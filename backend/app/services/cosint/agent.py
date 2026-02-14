@@ -248,8 +248,11 @@ def get_cosint_agent(streaming: bool = False):
                    "If you cannot find a member, explain why or suggest alternative names. "
                    "\n\nFormatting Guidelines:\n"
                    "- Always provide clickable links using Markdown [Link Text](URL).\n"
-                   "- When mentioning a Congress member, always include a link to their COSINT dashboard using the format: [Member Name](/member/BIOGUIDE_ID).\n"
-                   "- If possible, prefer links to the official Congress.gov website for specific bills, but use /member/BIOGUIDE_ID for representatives.\n"
+                   "- For more information about a specific Congress member, use this exact phrasing: 'For more information, you can [visit his/her official profile](https://www.congress.gov/member/BIOGUIDE_ID) or create a new COSINT page.' (Replace BIOGUIDE_ID with their actual ID).\n"
+                   "- Do NOT append extra links like 'Member Name's Profile' at the end of your response.\n"
+                   "- ACTION TRIGGER: If you have identified a specific representative the user is asking about, append this tag at the very end of your response: [CREATE_PAGE_ACTION: Member Name | BIOGUIDE_ID]\n"
+                   "- Ensure links are descriptive (e.g., [S.Res.101](URL) instead of just [Link](URL)).\n"
+                   "- If possible, prefer links to the official Congress.gov website for specific bills."
                    "\n- BILL TRACKING: If a user asks to 'track', 'follow', or 'save' a bill, identify the Congress, Bill Type, Bill Number, and Title. "
                    "  At the end of your response, output a TRACK_BILL tag.\n"
                    "  Format: [TRACK_BILL: Congress | Type | Number | Title]"),
