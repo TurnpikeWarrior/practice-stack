@@ -22,6 +22,8 @@ State Legislations Introduced (2025): 135,500+
 
 Do you know any of them? Stay Informed with COSINT! 
 
+**[Demo](https://practice-stack-neon.vercel.app/login)** 
+
 ## Technical Stuff
 
 - `backend/`: FastAPI server with LangChain agent and Congress API integration.
