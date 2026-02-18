@@ -25,7 +25,7 @@ There are:
 
 Do you know any of them? Stay Informed with COSINT! 
 
-**[Demo](https://practice-stack-neon.vercel.app/login)** 
+**[Demo]([https://practice-stack-neon.vercel.app/login](https://cosint-3m4kdv2yt-brickcode.vercel.app/login))** 
 
 ## Technical Stuff
 
