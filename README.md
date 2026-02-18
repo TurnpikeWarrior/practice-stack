@@ -3,6 +3,7 @@
 <img width="1200" height="750" alt="image" src="https://github.com/user-attachments/assets/6aef0237-9e11-4c5e-a513-c50761699daf" />
 
 
+
 COSINT (Civic Open Source Intelligence) is an AI-powered research tool for U.S. Congress. It gives everyday citizens the ability to look up their representatives track legislation, and undersatnd what's happening in Congress - all through a conversational chat interface. 
 
 ## What COSINT can do? 
